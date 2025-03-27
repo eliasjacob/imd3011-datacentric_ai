@@ -64,6 +64,10 @@ langchain-core = "^0.3.45"
 pydvl = "^0.9.2"
 distributed = "^2025.3.0"
 zarr = "^3.0.6"
+lima = "^0.5"
+shap = "^0.47.1"
+pdpbox = "^0.3.0"
+lime = "^0.2.0.1"
 
 [tool.poetry.group.cuda]
 optional = true
