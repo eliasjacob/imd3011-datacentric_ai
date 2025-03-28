@@ -170,9 +170,9 @@ Harvard Professor David Perkins, in his book [Making Learning Whole](https://www
 
 > **Important:** Initially, focus on what things do rather than all the details about how they work.
 
-## Final Project
+## Project
 
-Your final project will be evaluated based on:
+Your project will be evaluated based on:
 
 - **Technical Quality:** Robustness and efficacy of your implementation.
 - **Creativity:** Originality of your approach.
@@ -182,10 +182,16 @@ Your final project will be evaluated based on:
 
 ### Project Guidelines
 
-- **Individual Work:** The project must be completed individually.
-- **Submission:** Provide a link to a GitHub repository or shared folder with your code, data, and report. Use virtual environments along with a `requirements.txt` file to ensure reproducibility.
-- **Deadline:** Refer to the syllabus.
+- **Submission:** Provide a link to a GitHub repository or shared folder with your code, data, and report. Use virtual environments or Docker containers to ensure reproducibility.
+- **Report:** Include a detailed report with the following sections:
+  - **Introduction:** Overview of the problem and its significance.
+  - **Methodology:** Description of the approach and techniques used.
+  - **Results:** Presentation of your findings and outcomes.
+  - **Discussion:** Analysis of the results and potential improvements.
+  - **Conclusion:** Summary of your project and its implications.
+- **Code Quality:** Ensure your code is well-documented and follows best practices.
 - **Presentation:** Prepare a 10-minute presentation to demonstrate your project.
+- **Deadline:** Refer to the syllabus.
 - **Submission Platform:** Use the designated platform (e.g., SIGAA).
 
 ## Contributing
