@@ -154,13 +154,13 @@ def get_top_k_items(
             votes = dataset.counter_votes[i]
             label = dataset.soft_labels[i]
             score = compute_item_scores(influence_scores, item_type=item_type)[i]
-            rows.append({'item': item, 'votes': votes, 'label_prob': label, 'label_cat': np.argmax(label), 'probability_class': label[np.argmax(label)] , 'influence_score': score, 'influence_type': 'BAD'})
+            rows.append({'item': item, 'votes': votes, 'label_prob': label, 'label_cat': np.argmax(label), 'probability_class': label[np.argmax(label)] , 'influence_score': score, 'influence_type': 'BAD' if score < 0 else 'GOOD'})
         for i in best_indices:
             item = dataset.features[i]
             votes = dataset.counter_votes[i]
             label = dataset.soft_labels[i]
             score = compute_item_scores(influence_scores, item_type=item_type)[i]
-            rows.append({'item': item, 'votes': votes, 'label_prob': label, 'label_cat': np.argmax(label), 'probability_class': label[np.argmax(label)] ,'influence_score': score, 'influence_type': 'GOOD'})
+            rows.append({'item': item, 'votes': votes, 'label_prob': label, 'label_cat': np.argmax(label), 'probability_class': label[np.argmax(label)] ,'influence_score': score, 'influence_type': 'BAD' if score < 0 else 'GOOD'})
 
     elif item_type == 'lfs':
         if len(dataset.lf_names) < 5*2:
@@ -168,11 +168,11 @@ def get_top_k_items(
         for i in worst_indices:
             item = dataset.lf_names[i]
             score = compute_item_scores(influence_scores, item_type=item_type)[i]
-            rows.append({'item': item, 'influence_score': score, 'influence_type': 'BAD'})
+            rows.append({'item': item, 'influence_score': score, 'influence_type': 'BAD' if score < 0 else 'GOOD'})
         for i in best_indices:
             item = dataset.lf_names[i]
             score = compute_item_scores(influence_scores, item_type=item_type)[i]
-            rows.append({'item': item, 'influence_score': score, 'influence_type': 'GOOD'})
+            rows.append({'item': item, 'influence_score': score, 'influence_type': 'BAD' if score < 0 else 'GOOD'})
 
     # Create a pandas DataFrame from the list of dictionaries
     df = pd.DataFrame(rows)
