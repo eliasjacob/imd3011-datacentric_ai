@@ -13,27 +13,25 @@ This repository contains the code and resources for the course **IMD3011**, whic
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Course Content](#course-content)
-  - [Theoretical Introduction to Data-Centric AI and Weakly Supervised Learning](#theoretical-introduction-to-data-centric-ai-and-weakly-supervised-learning)
-  - [Semi-supervised and Positive Unlabeled Learning](#semi-supervised-and-positive-unlabeled-learning)
-  - [Weak Supervision Pipeline](#weak-supervision-pipeline)
-  - [Advanced Topics in Weak Supervision - Named Entity Recognition](#advanced-topics-in-weak-supervision---named-entity-recognition)
-  - [Annotation Error Detection](#annotation-error-detection)
-  - [Confident Learning and Cleanlab](#confident-learning-and-cleanlab)
-  - [Advanced Label Models](#advanced-label-models)
-  - [Influence Functions](#influence-functions)
-  - [Active Learning](#active-learning)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Using VS Code Dev Containers](#using-vs-code-dev-containers)
-- [Teaching Approach](#teaching-approach)
-- [Final Project](#final-project)
-- [Contributing](#contributing)
-- [Further Reading](#further-reading)
-- [Acknowledgments](#acknowledgments)
-- [License](#license)
-- [Contact](#contact)
+-   [Overview](#overview)
+-   [Course Content](#course-content)
+    -   [Theoretical Introduction to Data-Centric AI and Weakly Supervised Learning](#theoretical-introduction-to-data-centric-ai-and-weakly-supervised-learning)
+    -   [Semi-supervised and Positive Unlabeled Learning](#semi-supervised-and-positive-unlabeled-learning)
+    -   [Weak Supervision Pipeline](#weak-supervision-pipeline)
+    -   [Advanced Topics in Weak Supervision - Named Entity Recognition](#advanced-topics-in-weak-supervision---named-entity-recognition)
+    -   [Annotation Error Detection](#annotation-error-detection)
+    -   [Confident Learning and Cleanlab](#confident-learning-and-cleanlab)
+    -   [Advanced Label Models](#advanced-label-models)
+    -   [Influence Functions](#influence-functions)
+    -   [Active Learning](#active-learning)
+-   [Prerequisites](#prerequisites)
+-   [Installation](#installation)
+-   [Using VS Code Dev Containers](#using-vs-code-dev-containers)
+-   [Teaching Approach](#teaching-approach)
+-   [Projects](#projects)
+-   [Contributing](#contributing)
+-   [License](#license)
+-   [Contact](#contact)
 
 ## Course Content
 
@@ -170,7 +168,7 @@ Harvard Professor David Perkins, in his book [Making Learning Whole](https://www
 
 > **Important:** Initially, focus on what things do rather than all the details about how they work.
 
-## Project
+## Projects
 
 Your project will be evaluated based on:
 
