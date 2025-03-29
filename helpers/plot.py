@@ -19,7 +19,7 @@ def plot_label_distribution(
     color: str = 'royalblue',
     show_stats: bool = True,
     normalize: bool = True,
-    nbins: int | None = None
+    nbins: int = None
 ) -> go.Figure:
     """
     Plot the distribution of the number of labels per example in the dataset using Plotly.

@@ -15,16 +15,16 @@ class BaseDataset(ABC):
         self,
         features: list[str],
         split: str,
-        label_matrix: np.array | None,
-        true_labels: np.array | None = None,
-        transform_fn: Callable | None = None,
-        embeddings: np.array | None = None,
+        label_matrix: np.array ,
+        true_labels: np.array = None,
+        transform_fn: Callable = None,
+        embeddings: np.array = None,
         clean_unlabeled: bool = True,
-        labeling_functions: list[str] | None = None,
+        labeling_functions: list[str] = None,
         label_model: Any = None,
-        label_model_fit_kwargs: dict | None = None,
+        label_model_fit_kwargs: dict = None,
         init: bool = True,
-        sample_frac: float | None = None,
+        sample_frac: float = None,
     ) -> None:
         """
         Abstract method to initialize the dataset object.
@@ -32,15 +32,15 @@ class BaseDataset(ABC):
         Args:
             features (list[str]): list of feature names.
             split (str): Name of the split (e.g., "train", "dev", "test").
-            label_matrix (np.array | None): Label matrix of shape (num_examples, num_classes).
-            true_labels (np.array | None, optional): True labels of shape (num_examples,). Defaults to None.
-            transform_fn (Callable | None, optional): Function to transform examples. Defaults to None.
-            embeddings (np.array | None, optional): Embeddings of shape (num_examples, embedding_dim). Defaults to None.
+            label_matrix (np.array ): Label matrix of shape (num_examples, num_classes).
+            true_labels (np.array , optional): True labels of shape (num_examples,). Defaults to None.
+            transform_fn (Callable , optional): Function to transform examples. Defaults to None.
+            embeddings (np.array , optional): Embeddings of shape (num_examples, embedding_dim). Defaults to None.
             clean_unlabeled (bool, optional): Whether to remove unlabeled examples. Defaults to True.
-            labeling_functions (list[str] | None, optional): list of label functions. Defaults to None.
+            labeling_functions (list[str] , optional): list of label functions. Defaults to None.
             label_model (Any, optional): The label model. Defaults to None.
             init (bool, optional): Whether to initialize the label model. Defaults to True.
-            sample_frac (float | None, optional): Fraction of examples to sample. Defaults to None.
+            sample_frac (float , optional): Fraction of examples to sample. Defaults to None.
         """
         pass
 
@@ -128,16 +128,16 @@ class WeakDataset(BaseDataset):
         self,
         features: list[str],
         split: str,
-        label_matrix: np.array | None,
-        true_labels: np.array | None = None,
-        transform_fn: Callable | None = None,
-        embeddings: np.array | None = None,
+        label_matrix: np.array ,
+        true_labels: np.array = None,
+        transform_fn: Callable = None,
+        embeddings: np.array = None,
         clean_unlabeled: bool = True,
-        labeling_functions: list[str] | None = None,
+        labeling_functions: list[str] = None,
         label_model: Any = None,
-        label_model_fit_kwargs: dict | None = None,
+        label_model_fit_kwargs: dict = None,
         init: bool = True,
-        sample_frac: float | None = None,
+        sample_frac: float = None,
     ) -> None:
         """
         A class representing a dataset.
@@ -145,16 +145,16 @@ class WeakDataset(BaseDataset):
         Args:
             features (list[str]): list of feature names.
             split (str): Name of the split (e.g., "train", "dev", "test").
-            label_matrix (np.array | None): Label matrix of shape (num_examples, num_classes).
-            true_labels (np.array | None, optional): True labels of shape (num_examples,). Defaults to None.
-            transform_fn (Callable | None, optional): Function to transform examples. Defaults to None.
-            embeddings (np.array | None, optional): Embeddings of shape (num_examples, embedding_dim). Defaults to None.
+            label_matrix (np.array ): Label matrix of shape (num_examples, num_classes).
+            true_labels (np.array , optional): True labels of shape (num_examples,). Defaults to None.
+            transform_fn (Callable , optional): Function to transform examples. Defaults to None.
+            embeddings (np.array , optional): Embeddings of shape (num_examples, embedding_dim). Defaults to None.
             clean_unlabeled (bool, optional): Whether to remove unlabeled examples. Defaults to True.
-            labeling_functions (list[str] | None, optional): list of label function. Defaults to None.
+            labeling_functions (list[str] , optional): list of label function. Defaults to None.
             label_model (Any, optional): The label model. Defaults to None.
-            label_model_fit_kwargs (dict | None, optional): Keyword arguments for fitting the label model. Defaults to None.
+            label_model_fit_kwargs (dict , optional): Keyword arguments for fitting the label model. Defaults to None.
             init (bool, optional): Whether to initialize the label model. Defaults to True.
-            sample_frac (float | None, optional): Fraction of examples to sample. Defaults to None.
+            sample_frac (float , optional): Fraction of examples to sample. Defaults to None.
         """
         super().__init__(
             features=features,

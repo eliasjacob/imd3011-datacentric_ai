@@ -47,7 +47,7 @@ class NeuralNetwork(nn.Module):
         return F.log_softmax(x, dim=1)
 
 
-def train_and_evaluate_classification_models(X: pd.DataFrame, y: pd.Series, plot_calibration: bool = True) -> tuple[pd.DataFrame, list[tuple[str, str, np.ndarray]], go.Figure | None]:
+def train_and_evaluate_classification_models(X: pd.DataFrame, y: pd.Series, plot_calibration: bool = True) -> tuple[pd.DataFrame, list[tuple[str, str, np.ndarray]], go.Figure ]:
     """
     Train multiple classification models and evaluate their performance.
 
