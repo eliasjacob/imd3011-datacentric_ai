@@ -68,6 +68,8 @@ lima = "^0.5"
 shap = "^0.47.1"
 pdpbox = "^0.3.0"
 lime = "^0.2.0.1"
+catboost = "^1.2.7"
+pandas = "^2.2.3"
 
 [tool.poetry.group.cuda]
 optional = true
