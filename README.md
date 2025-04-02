@@ -36,15 +36,6 @@ This repository contains the code and resources for the course **IMD3011**, whic
 - [License](#license)
 - [Contact](#contact)
 
-
-**To apply the fix:**
-
-1.  Find the existing `## Table of Contents` section in your Markdown file.
-2.  Delete the entire list (`- [Overview]...` down to `- [Contact]...`).
-3.  Replace it with the corrected list provided above.
-
-This revised ToC accurately reflects the structure of your document with proper indentation for sub-sections. I've also added the links for the `### Example: Learning Baseball` and `### Project Guidelines` sub-sections, which were present in the document but missing from the original ToC.
-
 ## Course Content
 
 Please refer to the [Syllabus](Programa_IMD3011.pdf) for a detailed overview of the course topics and schedule.
