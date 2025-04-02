@@ -13,25 +13,37 @@ This repository contains the code and resources for the course **IMD3011**, whic
 
 ## Table of Contents
 
--   [Overview](#overview)
--   [Course Content](#course-content)
-    -   [Theoretical Introduction to Data-Centric AI and Weakly Supervised Learning](#theoretical-introduction-to-data-centric-ai-and-weakly-supervised-learning)
-    -   [Semi-supervised and Positive Unlabeled Learning](#semi-supervised-and-positive-unlabeled-learning)
-    -   [Weak Supervision Pipeline](#weak-supervision-pipeline)
-    -   [Advanced Topics in Weak Supervision - Named Entity Recognition](#advanced-topics-in-weak-supervision---named-entity-recognition)
-    -   [Annotation Error Detection](#annotation-error-detection)
-    -   [Confident Learning and Cleanlab](#confident-learning-and-cleanlab)
-    -   [Advanced Label Models](#advanced-label-models)
-    -   [Influence Functions](#influence-functions)
-    -   [Active Learning](#active-learning)
--   [Prerequisites](#prerequisites)
--   [Installation](#installation)
--   [Using VS Code Dev Containers](#using-vs-code-dev-containers)
--   [Teaching Approach](#teaching-approach)
--   [Projects](#projects)
--   [Contributing](#contributing)
--   [License](#license)
--   [Contact](#contact)
+- [Overview](#overview)
+- [Course Content](#course-content)
+  - [Theoretical Introduction to Data-Centric AI and Weakly Supervised Learning](#theoretical-introduction-to-data-centric-ai-and-weakly-supervised-learning)
+  - [Semi-supervised and Positive Unlabeled Learning](#semi-supervised-and-positive-unlabeled-learning)
+  - [Weak Supervision Pipeline](#weak-supervision-pipeline)
+  - [Advanced Topics in Weak Supervision - Named Entity Recognition](#advanced-topics-in-weak-supervision---named-entity-recognition)
+  - [Annotation Error Detection](#annotation-error-detection)
+  - [Confident Learning and Cleanlab](#confident-learning-and-cleanlab)
+  - [Advanced Label Models](#advanced-label-models)
+  - [Influence Functions](#influence-functions)
+  - [Active Learning](#active-learning)
+  - [Explainable AI and Model Interpretability](#explainable-ai-and-model-interpretability)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Using VS Code Dev Containers](#using-vs-code-dev-containers)
+- [Teaching Approach](#teaching-approach)
+  - [Example: Learning Baseball](#example-learning-baseball)
+- [Projects](#projects)
+  - [Project Guidelines](#project-guidelines)
+- [Contributing](#contributing)
+- [License](#license)
+- [Contact](#contact)
+
+
+**To apply the fix:**
+
+1.  Find the existing `## Table of Contents` section in your Markdown file.
+2.  Delete the entire list (`- [Overview]...` down to `- [Contact]...`).
+3.  Replace it with the corrected list provided above.
+
+This revised ToC accurately reflects the structure of your document with proper indentation for sub-sections. I've also added the links for the `### Example: Learning Baseball` and `### Project Guidelines` sub-sections, which were present in the document but missing from the original ToC.
 
 ## Course Content
 
@@ -96,6 +108,11 @@ Please refer to the [Syllabus](Programa_IMD3011.pdf) for a detailed overview of 
 - Query by Committee
 - Diversity sampling
 
+### Explainable AI and Model Interpretability
+- Explainable AI (XAI) techniques
+- SHAP (SHapley Additive exPlanations)
+- LIME (Local Interpretable Model-agnostic Explanations)
+
 ## Prerequisites
 
 Ensure your system meets the following requirements:
@@ -124,6 +141,7 @@ Follow these steps to set up your environment and install the dependencies:
      
      ```shell
      poetry install --sync -E cuda --with cuda
+     poetry self add poetry-plugin-shell
      poetry shell
      ```
 
@@ -131,6 +149,7 @@ Follow these steps to set up your environment and install the dependencies:
      
      ```shell
      poetry install --sync -E cpu
+     poetry self add poetry-plugin-shell
      poetry shell
      ```
 
