@@ -144,136 +144,280 @@ class SelfTrainingLeaner(BaseEstimator, ClassifierMixin):
         check_is_fitted(self, ['final_classifier_', 'classes_'])
 
 class MultiViewCoTrainingClassifier(BaseEstimator, ClassifierMixin):
-    def __init__(self, base_estimator: BaseEstimator = None, 
-                 n_views: int = 2, n_iter: int = 50, pool_size: int = 75, 
-                 n_positive: int = 5, n_negative: int = 5):
-        """
-        Multi-view Co-Training Classifier.
+    """
+    Co-Training Classifier adapting its strategy based on the number of views.
 
+    - If n_views == 2: Implements the original Blum & Mitchell co-training
+      algorithm with separate conceptual training sets and cross-teaching.
+    - If n_views > 2: Implements a multi-view variant where predictions
+      are aggregated for pseudo-labeling and a shared training pool is used.
+    """
+    def __init__(self, base_estimator: BaseEstimator = None,
+                 n_views: int = 2, n_iter: int = 50, pool_size: int = 75,
+                 n_to_add: int = 10):
+        """
         Args:
             base_estimator (BaseEstimator): The base estimator to use for each view.
-            n_views (int): Number of views to split the features into.
+                                            If None, defaults to RandomForestClassifier(n_estimators=100).
+            n_views (int): Number of views to split the features into. Determines strategy.
             n_iter (int): Number of iterations for the co-training process.
-            pool_size (int): Size of the pool of unlabeled data to consider in each iteration.
-            n_positive (int): Number of positive examples to add per view in each iteration.
-            n_negative (int): Number of negative examples to add per view in each iteration.
+            pool_size (int): Size of the pool of unlabeled data to sample from in each iteration.
+            n_to_add (int): Total number of examples (most confident positive and negative combined)
+                             to attempt to add per view/classifier in each iteration.
+                             For n_views=2, each classifier selects n_to_add/2 positive and n_to_add/2 negative.
+                             For n_views>2, each classifier selects based on this, but labeling aggregates.
         """
-        self.base_estimator = base_estimator or RandomForestClassifier(n_estimators=100, random_state=271828)
+        self.base_estimator = base_estimator
         self.n_views = n_views
         self.n_iter = n_iter
         self.pool_size = pool_size
-        self.n_positive = n_positive  # number of positive examples to add per view
-        self.n_negative = n_negative  # number of negative examples to add per view
+        self.n_to_add = n_to_add # Simplified: total to add per view
 
     def fit(self, X: np.ndarray, y: np.ndarray, X_unlabeled: np.ndarray) -> 'MultiViewCoTrainingClassifier':
         """
         Fit the multi-view co-training classifier.
 
         Args:
-            X (np.ndarray): Labeled training data.
-            y (np.ndarray): Labels for the training data.
-            X_unlabeled (np.ndarray): Unlabeled data.
+            X (np.ndarray): Labeled training data features.
+            y (np.ndarray): Labeled training data labels.
+            X_unlabeled (np.ndarray): Unlabeled data features.
 
         Returns:
             MultiViewCoTrainingClassifier: The fitted classifier.
         """
-        # Validate the input data
+        # Input Validation and Initialization 
         X, y = check_X_y(X, y)
         X_unlabeled = check_array(X_unlabeled)
         self.classes_ = unique_labels(y)
+        if len(self.classes_) != 2:
+             print("Warning: Co-Training selection logic is often designed for binary "
+                   "problems. Performance on multiclass might vary.")
+            # For multiclass n_to_add might need different interpretation
 
-        # Split features into n_views
         n_features = X.shape[1]
-        self.feature_splits = np.array_split(range(n_features), self.n_views)
+        if n_features < self.n_views:
+            raise ValueError(f"Number of features ({n_features}) must be >= n_views ({self.n_views})")
+        self.feature_splits_ = np.array_split(range(n_features), self.n_views)
 
-        # Initialize classifiers for each view
-        self.classifiers_ = [clone(self.base_estimator).fit(X[:, split], y) for split in self.feature_splits]
+        # Store initial labeled data
+        X_initial = X.copy()
+        y_initial = y.copy()
+        X_unlabeled_current = X_unlabeled.copy()
 
-        # Main co-training loop
-        for _ in range(self.n_iter):
-            if len(X_unlabeled) == 0:
+        # Determine selection counts per class (approximate balance)
+        n_pos_per_view = self.n_to_add // 2
+        n_neg_per_view = self.n_to_add - n_pos_per_view
+
+        # Train classifiers on initial labeled data
+        self.classifiers_ = [clone(self._get_base_estimator()).fit(X_initial[:, split], y_initial)
+                             for split in self.feature_splits_]
+
+        # Co-rraining Loop
+        for iteration in range(self.n_iter):
+            if len(X_unlabeled_current) == 0:
+                print(f"Stopping early: No more unlabeled data at iteration {iteration+1}.")
                 break
 
             # Select a pool of unlabeled data
-            pool_indices = np.random.choice(len(X_unlabeled), min(self.pool_size, len(X_unlabeled)), replace=False)
-            X_pool = X_unlabeled[pool_indices]
+            pool_size_actual = min(self.pool_size, len(X_unlabeled_current))
+            pool_indices_orig = np.random.choice(len(X_unlabeled_current), pool_size_actual, replace=False)
+            X_pool = X_unlabeled_current[pool_indices_orig]
 
-            # Get predictions from all classifiers
-            predictions = [clf.predict_proba(X_pool[:, split]) for clf, split in zip(self.classifiers_, self.feature_splits)]
+            # Get Predictions on Pool
+            # Store predictions {view_index: {'proba': array, 'pred': array}}
+            predictions_pool = {}
+            for i, (clf, split) in enumerate(zip(self.classifiers_, self.feature_splits_)):
+                if len(X_pool) > 0:
+                    proba = clf.predict_proba(X_pool[:, split])
+                    pred = self.classes_[np.argmax(proba, axis=1)] # Use fitted classes_
+                    predictions_pool[i] = {'proba': proba, 'pred': pred}
+                else:
+                    predictions_pool[i] = {'proba': np.empty((0, len(self.classes_))), 'pred': np.empty(0)}
 
-            # Select examples to add
-            to_add = set()
-            for pred in predictions:
-                top_positive = np.argsort(pred[:, 1])[-self.n_positive:]
-                top_negative = np.argsort(pred[:, 0])[-self.n_negative:]
-                to_add.update(top_positive)
-                to_add.update(top_negative)
 
-            to_add = list(to_add)
-            
-            if not to_add:  # If no examples were selected, continue to next iteration
-                continue
+            # Data to add in this iteration {view_index_adding: {'X': list, 'y': list, 'indices_in_pool': list}}
+            data_to_add_this_iter = {i: {'X': [], 'y': [], 'indices_in_pool': []} for i in range(self.n_views)}
+            indices_to_remove_from_unlabeled = set() # Track original indices in X_unlabeled_current
 
-            # Add selected examples to labeled data
-            X = np.vstack((X, X_pool[to_add]))
-            
-            # Calculate new labels
-            new_labels = np.array([
-                [1 if clf.predict_proba(X_pool[to_add][:, split])[:, 1][i] > 0.5 else 0 
-                 for i in range(len(to_add))]
-                for clf, split in zip(self.classifiers_, self.feature_splits)
-            ])
-            
-            # Average predictions across views and round to get final labels
-            y_new = new_labels.mean(axis=0).round().astype(int)
-            
-            # Ensure y_new is 1-dimensional
-            y_new = y_new.ravel()
-            
-            y = np.concatenate((y, y_new))
+            # Select Examples and Determine Labels (Strategy depends on n_views)
+            if self.n_views == 2:
+                # Original Co-Training Logic (Blum & Mitchell)
+                for view_idx in range(self.n_views):
+                    other_view_idx = 1 - view_idx
+                    preds_view = predictions_pool[view_idx]['proba']
+                    labels_view = predictions_pool[view_idx]['pred']
 
-            # Remove selected examples from unlabeled data
-            X_unlabeled = np.delete(X_unlabeled, pool_indices[to_add], axis=0)
+                    if preds_view.shape[0] == 0: continue # Pool is empty
 
-            # Retrain classifiers
-            self.classifiers_ = [clone(self.base_estimator).fit(X[:, split], y) for split in self.feature_splits]
+                    # sort by probability of class 1 for pos, class 0 for neg
+                    conf_pos = preds_view[:, 1] # Confidence for class 1
+                    conf_neg = preds_view[:, 0] # Confidence for class 0
+
+                    idx_sorted_pos = np.argsort(conf_pos)[::-1] # Descending conf for class 1
+                    idx_sorted_neg = np.argsort(conf_neg)[::-1] # Descending conf for class 0
+
+                    selected_indices_pos = idx_sorted_pos[:n_pos_per_view]
+                    selected_indices_neg = idx_sorted_neg[:n_neg_per_view]
+
+                    # Combine and ensure uniqueness within this view's selection
+                    selected_indices_in_pool = np.unique(np.concatenate((selected_indices_pos, selected_indices_neg)))
+
+                    if len(selected_indices_in_pool) > 0:
+                        # Get data and labels PREDICTED BY THIS VIEW (view_idx)
+                        X_add = X_pool[selected_indices_in_pool]
+                        y_add = labels_view[selected_indices_in_pool] # Label from *this* classifier
+
+                        # Store it to be used for training the OTHER view
+                        data_to_add_this_iter[other_view_idx]['X'].append(X_add)
+                        data_to_add_this_iter[other_view_idx]['y'].append(y_add)
+                        data_to_add_this_iter[other_view_idx]['indices_in_pool'].extend(selected_indices_in_pool.tolist())
+                        indices_to_remove_from_unlabeled.update(pool_indices_orig[selected_indices_in_pool])
+
+            else: # self.n_views > 2
+                # == Multi-View Logic (Shared Pool, Aggregated Labels) ==
+                candidate_indices_in_pool = set()
+                # Gather candidates from all views
+                for view_idx in range(self.n_views):
+                    preds_view = predictions_pool[view_idx]['proba']
+                    if preds_view.shape[0] == 0: continue
+
+                    conf_pos = preds_view[:, 1]
+                    conf_neg = preds_view[:, 0]
+                    idx_sorted_pos = np.argsort(conf_pos)[::-1]
+                    idx_sorted_neg = np.argsort(conf_neg)[::-1]
+                    selected_indices_pos = idx_sorted_pos[:n_pos_per_view]
+                    selected_indices_neg = idx_sorted_neg[:n_neg_per_view]
+                    candidate_indices_in_pool.update(selected_indices_pos)
+                    candidate_indices_in_pool.update(selected_indices_neg)
+
+                selected_indices_in_pool = list(candidate_indices_in_pool)
+
+                if len(selected_indices_in_pool) > 0:
+                    X_add = X_pool[selected_indices_in_pool]
+
+                    # Aggregate predictions for labeling
+                    all_probas = np.array([predictions_pool[i]['proba'][selected_indices_in_pool]
+                                           for i in range(self.n_views)])
+                    avg_proba = np.mean(all_probas, axis=0)
+                    y_add = self.classes_[np.argmax(avg_proba, axis=1)] # Label by average confidence
+
+                    # Store it to be added to the shared pool (conceptually view_idx 0 here)
+                    data_to_add_this_iter[0]['X'].append(X_add)
+                    data_to_add_this_iter[0]['y'].append(y_add)
+                    data_to_add_this_iter[0]['indices_in_pool'].extend(selected_indices_in_pool) # Not strictly needed after aggregation
+                    indices_to_remove_from_unlabeled.update(pool_indices_orig[selected_indices_in_pool])
+
+            # Remove Added Examples from Unlabeled Pool            
+            if indices_to_remove_from_unlabeled:
+                remove_mask = np.ones(len(X_unlabeled_current), dtype=bool)
+                # Ensure indices are within bounds before trying to set mask
+                valid_indices = [idx for idx in indices_to_remove_from_unlabeled if idx < len(remove_mask)]
+                if valid_indices:
+                    remove_mask[valid_indices] = False
+                X_unlabeled_current = X_unlabeled_current[remove_mask]
+            else:
+                 # No examples added in this iteration by any view
+                 print(f"Iteration {iteration+1}: No confident examples found to add.")
+                 continue # Skip retraining if nothing was added
+
+            # Retrain Classifiers
+            if self.n_views == 2:
+                # Original co-training retraining
+                new_classifiers = []
+                for view_idx in range(self.n_views):
+                    # Data for this view = Initial + Data added by the OTHER view
+                    X_to_add = np.vstack(data_to_add_this_iter[view_idx]['X']) if data_to_add_this_iter[view_idx]['X'] else np.empty((0, X_initial.shape[1]))
+                    y_to_add = np.concatenate(data_to_add_this_iter[view_idx]['y']) if data_to_add_this_iter[view_idx]['y'] else np.empty(0)
+
+                    if X_to_add.shape[0] > 0:
+                         X_train_view = np.vstack((X_initial, X_to_add))
+                         y_train_view = np.concatenate((y_initial, y_to_add))
+                    else:
+                         X_train_view = X_initial
+                         y_train_view = y_initial
+
+                    # Clone and retrain on combined data using this view's features
+                    clf = clone(self._get_base_estimator())
+                    clf.fit(X_train_view[:, self.feature_splits_[view_idx]], y_train_view)
+                    new_classifiers.append(clf)
+                self.classifiers_ = new_classifiers
+
+            else: # self.n_views > 2
+                # Multi-view retraining (shared pool)
+                # Aggregate all added data into the main pool
+                X_added_all = np.vstack(data_to_add_this_iter[0]['X']) if data_to_add_this_iter[0]['X'] else np.empty((0, X_initial.shape[1]))
+                y_added_all = np.concatenate(data_to_add_this_iter[0]['y']) if data_to_add_this_iter[0]['y'] else np.empty(0)
+
+                if X_added_all.shape[0] > 0:
+                    # Update the shared labeled pool for the next iteration's reference
+                    # Note: For pure multi-view retraining, we'd just use this combined pool.
+                    # Let's re-initialize X/y for retraining for simplicity here.
+                    X_train_shared = np.vstack((X_initial, X_added_all))
+                    y_train_shared = np.concatenate((y_initial, y_added_all))
+                     # Update X_initial, y_initial conceptually for the next iteration
+                     # This makes the multi-view behave more like the original where added data persists
+                    X_initial = X_train_shared.copy()
+                    y_initial = y_train_shared.copy()
+
+                else:
+                    X_train_shared = X_initial
+                    y_train_shared = y_initial
+
+                # Retrain all classifiers on the updated shared pool
+                self.classifiers_ = [clone(self._get_base_estimator()).fit(X_train_shared[:, split], y_train_shared)
+                                     for split in self.feature_splits_]
+
+        # Final check: Ensure classifiers were trained
+        if not hasattr(self, 'classifiers_') or not self.classifiers_:
+             raise RuntimeError("Classifier fitting failed.")
+
+        # Store the final state if needed (e.g., final combined X,y for n_views>2)
+        # For n_views=2, the state is captured in the final classifiers trained on their respective augmented sets.
+        # For n_views>2, the state is captured by classifiers trained on the final aggregated X_initial, y_initial
 
         return self
 
-    def predict(self, X: np.ndarray) -> np.ndarray:
-        """
-        Predict class labels for the input data.
-
-        Args:
-            X (np.ndarray): Input data.
-
-        Returns:
-            np.ndarray: Predicted class labels.
-        """
-        check_is_fitted(self)
-        X = check_array(X)
-        
-        predictions = [clf.predict_proba(X[:, split]) for clf, split in zip(self.classifiers_, self.feature_splits)]
-        avg_prediction = np.mean(predictions, axis=0)
-        
-        return np.argmax(avg_prediction, axis=1)
-
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
         """
-        Predict class probabilities for the input data.
-
-        Args:
-            X (np.ndarray): Input data.
-
-        Returns:
-            np.ndarray: Predicted class probabilities.
+        Predict class probabilities by averaging predictions from all views.
         """
         check_is_fitted(self)
         X = check_array(X)
-        
-        predictions = [clf.predict_proba(X[:, split]) for clf, split in zip(self.classifiers_, self.feature_splits)]
-        return np.mean(predictions, axis=0)
+        predictions = []
+        for clf, split in zip(self.classifiers_, self.feature_splits_):
+            # Handle cases where a view might have 0 features after split (unlikely but safe)
+            if X[:, split].shape[1] > 0:
+                 predictions.append(clf.predict_proba(X[:, split]))
+            else:
+                 # Cannot predict with 0 features, return uniform probability? Or error?
+                 # For simplicity, let's assume uniform if this happens.
+                 num_samples = X.shape[0]
+                 num_classes = len(self.classes_)
+                 predictions.append(np.full((num_samples, num_classes), 1.0 / num_classes))
 
+        # Average probabilities across views
+        avg_prediction = np.mean(predictions, axis=0)
+        return avg_prediction
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """
+        Predict class labels based on the highest average probability.
+        """
+        proba = self.predict_proba(X)
+        return self.classes_[np.argmax(proba, axis=1)]
+
+    def _get_base_estimator(self):
+        # Helper to get a fresh clone or the default estimator
+        if self.base_estimator is None:
+            # Define default here to avoid storing a fitted default in __init__
+            return RandomForestClassifier(n_estimators=100, random_state=271828)
+        else:
+            return clone(self.base_estimator)
+
+    # Add _more_tags for sklearn compatibility
+    def _more_tags(self):
+        return {'requires_y': True}
+        
 
 
 ###### ImPULSE Classifier - Adapted from https://github.com/woldemarg/impulse_classifier ######
