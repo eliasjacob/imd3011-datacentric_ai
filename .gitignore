@@ -170,3 +170,4 @@ binaries.zip
 tmp*
 wandb
 *.code-workspace
+catboost_info
