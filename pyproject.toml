@@ -70,6 +70,7 @@ pdpbox = "^0.3.0"
 lime = "^0.2.0.1"
 catboost = "^1.2.7"
 pandas = "^2.2.3"
+beautifulsoup4 = "^4.13.4"
 
 [tool.poetry.group.cuda]
 optional = true

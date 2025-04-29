@@ -131,7 +131,7 @@ Follow these steps to set up your environment and install the dependencies:
    - **For GPU support:**
      
      ```shell
-     poetry install --sync -E cuda --with cuda
+     poetry install -E cuda --with cuda
      poetry self add poetry-plugin-shell
      poetry shell
      ```
@@ -139,7 +139,7 @@ Follow these steps to set up your environment and install the dependencies:
    - **For CPU-only support:**
      
      ```shell
-     poetry install --sync -E cpu
+     poetry install -E cpu
      poetry self add poetry-plugin-shell
      poetry shell
      ```
