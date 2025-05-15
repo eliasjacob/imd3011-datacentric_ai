@@ -8,7 +8,7 @@ from snorkel.labeling import LabelingFunction, LFAnalysis, labeling_function
 ABSTAIN = -1
 
 
-def create_labeling_functions_from_regex(regex_patterns: list[tuple[re.Pattern, str, int, int]]) -> list[Callable]:
+def create_labeling_functions_from_regex(regex_patterns: list[tuple[re.Pattern, str, int, int]], name_of_text_column: str = "text") -> list[Callable]:
     """
     Create labeling functions from a list of regex patterns.
 
@@ -18,6 +18,7 @@ def create_labeling_functions_from_regex(regex_patterns: list[tuple[re.Pattern, 
             - name (str): Name of the labeling function.
             - label (int): Label to return if the pattern matches.
             - label_else (int): Label to return if the pattern does not match.
+        name_of_text_column (str): The name of the text column in the DataFrame.
 
     Returns:
         list[Callable]: A list of labeling functions.
@@ -28,7 +29,7 @@ def create_labeling_functions_from_regex(regex_patterns: list[tuple[re.Pattern, 
         @labeling_function(name=f"lf_regex_{name}")
         def labeling_function_instance(x, pattern=pattern, match_label=match_label, else_label=else_label):
             # Return the match label if the pattern matches, otherwise return the else label
-            return match_label if pattern.search(x.text) else else_label
+            return match_label if pattern.search(x[name_of_text_column]) else else_label
 
         labeling_functions.append(labeling_function_instance)
     return labeling_functions
