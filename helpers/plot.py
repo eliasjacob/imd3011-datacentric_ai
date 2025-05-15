@@ -402,7 +402,7 @@ def plot_class_examples(dataset, num_classes=10, figsize=(15, 6), img_feature_na
     
     return fig, axs
 
-def plot_probability_distribution(
+def plot_confidence_distribution(
     probabilities: np.ndarray,
     positive_label: str = "POSITIVE",
     negative_label: str = "NEGATIVE",
@@ -441,11 +441,14 @@ def plot_probability_distribution(
     # For 2D arrays with at least two columns, assume first two columns are the classes
     elif len(probabilities.shape) == 2 and probabilities.shape[1] >= 2:
         pos_probs = probabilities[:, 1]  # Assume positive class probabilities are in column 1
-        neg_probs = probabilities[:, 0]  # Assume negative class probabilities are in column 0
+        neg_probs = 1 - probabilities[:, 1] 
     else:
         raise ValueError(
             "Expected either 1D array of positive probs or 2D array with shape (n_samples, n_classes)"
         )
+
+    pos_probs = pos_probs[pos_probs >= 0.5]  # Filter positive probabilities
+    neg_probs = neg_probs[neg_probs < 0.5]  # Filter negative probabilities
 
     # Create histogram traces for both positive and negative class probabilities
     pos_histogram = go.Histogram(
@@ -480,6 +483,9 @@ def plot_probability_distribution(
             y1=1,
             yref="paper",
             line=dict(color=colors[0], width=2, dash="dash"),
+            label=dict(
+                text=f"Positive Mean: {pos_mean:.2f}",
+            ),
         )
         # Draw vertical mean line for negative class
         fig.add_shape(
@@ -490,33 +496,16 @@ def plot_probability_distribution(
             y1=1,
             yref="paper",
             line=dict(color=colors[1], width=2, dash="dash"),
-        )
-        # Annotate positive class mean
-        fig.add_annotation(
-            x=pos_mean,
-            y=1,
-            text=f"{positive_label} Mean: {pos_mean:.3f}",
-            showarrow=True,
-            arrowhead=1,
-            yshift=10,
-            font=dict(color=colors[0]),
-        )
-        # Annotate negative class mean
-        fig.add_annotation(
-            x=neg_mean,
-            y=0.9,
-            text=f"{negative_label} Mean: {neg_mean:.3f}",
-            showarrow=True,
-            arrowhead=1,
-            yshift=5,
-            font=dict(color=colors[1]),
+            label=dict(
+                text=f"Negative Mean: {neg_mean:.2f}",
+            ),
         )
 
     # Update figure layout with titles, axis ranges/formats, and styling details
     fig.update_layout(
-        title=f"Probability Distribution: {positive_label} vs {negative_label}",
+        title=f"Confidence Distribution: {positive_label} vs. {negative_label}",
         xaxis=dict(
-            title="Probability", range=[0, 1], tickformat=".1f", gridcolor="lightgray"
+            title="Confidence", range=[0, 1], tickformat=".1f", gridcolor="lightgray"
         ),
         yaxis=dict(title="Density", gridcolor="lightgray"),
         bargap=0.1,
